@@ -1,13 +1,13 @@
-export enum EContentfulEnvironment {
+export enum ContentfulEnvironment {
     DEVELOPMENT = "DEV",
 }
 
-export enum EContentfulLocale {
+export enum ContentfulLocale {
     EN = "en-US",
     FR_CA = "fr-CA",
 }
 
-export interface ITranslationsData {
+export interface TranslationsData {
     contentTypeId: string;
     entryId: string;
     field: string;

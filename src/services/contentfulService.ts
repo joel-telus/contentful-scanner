@@ -1,38 +1,38 @@
 import { createClient, ClientAPI }  from "contentful-management";
 
 import { isLocalizedContent } from "./translateService";
-import {EContentfulEnvironment, EContentfulLocale, ITranslationsData} from "../types";
+import {ContentfulEnvironment, ContentfulLocale, TranslationsData} from "../types";
 
-interface IHandleFetchAllEntriesProperties {
+interface HandleFetchAllEntriesProperties {
     contentfulClient: ClientAPI;
     contentTypeId: string;
     spaceId: string;
 }
 
-interface IFetchMissingTranslations {
+interface FetchMissingTranslations {
     contentfulAccessToken: string | undefined;
     spaceId: string;
 }
-interface IExtractContentFromArraysProperties {
+interface ExtractContentFromArraysProperties {
     content_EN: (string | unknown[])[];
     content_FR_CA: (string | unknown[])[];
     contentTypeId: string;
     entryId: string;
     fieldName: string;
-    allEntries: ITranslationsData[];
+    allEntries: TranslationsData[];
 }
 /**
  * Extracts content from arrays and handles nested arrays recursively.
- * @param {IExtractContentFromArraysProperties} params - The function parameters.
+ * @param {ExtractContentFromArraysProperties} params - The function parameters.
  */
-const extractContentFromArrays = ({ content_EN, content_FR_CA, contentTypeId, entryId, fieldName, allEntries }: IExtractContentFromArraysProperties) => {
+const extractContentFromArrays = ({ content_EN, content_FR_CA, contentTypeId, entryId, fieldName, allEntries }: ExtractContentFromArraysProperties) => {
     if (Array.isArray(content_EN)) {
         for (let i = 0; i < content_EN.length; i++) {
             if (Array.isArray(content_EN[i])) {
                 // If the content is a nested array, recursively handle it
                 extractContentFromArrays({ content_EN: content_EN[i] as (string | unknown[])[], content_FR_CA: content_FR_CA?.[i] as (string | unknown[])[], contentTypeId, entryId, fieldName, allEntries });
             } else if (typeof content_EN[i] === "string") {
-                const data: ITranslationsData = {
+                const data: TranslationsData = {
                     contentTypeId,
                     entryId,
                     field: fieldName,
@@ -45,7 +45,7 @@ const extractContentFromArrays = ({ content_EN, content_FR_CA, contentTypeId, en
             }
         }
     } else {
-        const data: ITranslationsData = {
+        const data: TranslationsData = {
             contentTypeId,
             entryId,
             field: fieldName,
@@ -59,13 +59,13 @@ const extractContentFromArrays = ({ content_EN, content_FR_CA, contentTypeId, en
 /**
  * Fetches all entries for a given content type from Contentful.
  * @async
- * @param {IHandleFetchAllEntriesProperties} params - The function parameters.
- * @returns {Promise<ITranslationsData[]>} - Array of all entries.
+ * @param {HandleFetchAllEntriesProperties} params - The function parameters.
+ * @returns {Promise<TranslationsData[]>} - Array of all entries.
  */
-const fetchAllEntries = async ({ contentfulClient, contentTypeId, spaceId }: IHandleFetchAllEntriesProperties): Promise<ITranslationsData[]> => {
-    const allEntries: ITranslationsData[] = [];
+const fetchAllEntries = async ({ contentfulClient, contentTypeId, spaceId }: HandleFetchAllEntriesProperties): Promise<TranslationsData[]> => {
+    const allEntries: TranslationsData[] = [];
     const space = await contentfulClient.getSpace(spaceId);
-    const environment = await space.getEnvironment(process.env.CONTENTFUL_ENVIRONMENT as EContentfulEnvironment);
+    const environment = await space.getEnvironment(process.env.CONTENTFUL_ENVIRONMENT as ContentfulEnvironment);
 
     const contentType = await environment.getContentType(contentTypeId);
 
@@ -79,8 +79,8 @@ const fetchAllEntries = async ({ contentfulClient, contentTypeId, spaceId }: IHa
                 continue;  // If the field is not localized, skip the checks.
             }
 
-            const localizedContent_EN = entry.fields[fieldName][EContentfulLocale.EN];
-            const localizedContent_FR_CA = entry.fields[fieldName][EContentfulLocale.FR_CA];
+            const localizedContent_EN = entry.fields[fieldName][ContentfulLocale.EN];
+            const localizedContent_FR_CA = entry.fields[fieldName][ContentfulLocale.FR_CA];
 
             if (typeof localizedContent_EN === "string") {
                 const data = {
@@ -111,12 +111,12 @@ const fetchAllEntries = async ({ contentfulClient, contentTypeId, spaceId }: IHa
  * Fetches missing translations from Contentful.
  * Iterates over all content types and their entries to identify untranslated content.
  * @async
- * @param {IFetchMissingTranslations} params - The function parameters.
- * @returns {Promise<ITranslationsData[]>} - Array of entries with missing translations.
+ * @param {FetchMissingTranslations} params - The function parameters.
+ * @returns {Promise<TranslationsData[]>} - Array of entries with missing translations.
  * @throws {Error} Throws an error if Contentful access token is not provided or any other error occurs during fetching.
  */
 
-export const fetchMissingTranslations = async ({ spaceId, contentfulAccessToken }: IFetchMissingTranslations): Promise<ITranslationsData[]> => {
+export const fetchMissingTranslations = async ({ spaceId, contentfulAccessToken }: FetchMissingTranslations): Promise<TranslationsData[]> => {
     if (!contentfulAccessToken) {
         throw new Error("Contentful access token is not provided");
     }
@@ -124,14 +124,14 @@ export const fetchMissingTranslations = async ({ spaceId, contentfulAccessToken 
         const contentfulClient = createClient({
             accessToken: contentfulAccessToken,
         });
-        const missingTranslations: ITranslationsData[] = [];
+        const missingTranslations: TranslationsData[] = [];
         const space = await contentfulClient.getSpace(spaceId);
-        const environment = await space.getEnvironment(process.env.CONTENTFUL_ENVIRONMENT as EContentfulEnvironment);
+        const environment = await space.getEnvironment(process.env.CONTENTFUL_ENVIRONMENT as ContentfulEnvironment);
         const contentTypes = await environment.getContentTypes();
         for (const contentType of contentTypes.items) {
             const entries = await fetchAllEntries({ contentfulClient, contentTypeId: contentType.sys.id, spaceId });
             for (const entry of entries) {
-                const { isLocalized} = await isLocalizedContent({ translatedContent: entry.content_FR_CA, locale: EContentfulLocale.FR_CA});
+                const { isLocalized} = await isLocalizedContent({ translatedContent: entry.content_FR_CA, locale: ContentfulLocale.FR_CA});
                 if (!isLocalized) {
                     missingTranslations.push(entry);
                 }

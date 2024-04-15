@@ -1,10 +1,10 @@
 import { TranslationServiceClient } from "@google-cloud/translate";
-interface IIsLocalizedContentProperties {
+interface IsLocalizedContentProperties {
     translatedContent: string | undefined;
     locale: string;
 }
 
-interface IIsLocalizedContentReturn {
+interface IsLocalizedContentProperties {
     isLocalized: boolean;
 }
 
@@ -17,14 +17,14 @@ interface IIsLocalizedContentReturn {
  * @param {string} params.translatedContent - The content to check for localization.
  * @param {string} params.locale - The target locale to check against.
  *
- * @returns {Promise<IIsLocalizedContentReturn>} An object indicating whether the content is localized or not.
+ * @returns {Promise<IsLocalizedContentProperties>} An object indicating whether the content is localized or not.
  * @throws {Error} Throws an error if any problem occurs while detecting the language.
  *
  * @example
  * const result = await isLocalizedContent({ translatedContent: "Bonjour", locale: "fr" });
  * console.log(result.isLocalized);  // Expected output: true
  */
-export const isLocalizedContent = async ({ translatedContent, locale } : IIsLocalizedContentProperties): Promise<IIsLocalizedContentReturn> => {
+export const isLocalizedContent = async ({ translatedContent, locale } : IsLocalizedContentProperties): Promise<IsLocalizedContentProperties> => {
     const projectId = process.env.GCP_PROJECT_ID;
     const location = process.env.GCP_LOCATION;
     const parent = `projects/${projectId}/locations/${location}`;
