@@ -1,0 +1,29 @@
+{
+  "name": "contentful-translation-scanner",
+  "version": "1.0.0",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20.x"
+  },
+  "license": "MIT",
+  "scripts": {
+    "tsconfig": "tsc --init",
+    "gcp-build": "tsc",
+    "start": "functions-framework --target app --port 8081"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "3.3.0",
+    "@google-cloud/secret-manager": "^5.0.1",
+    "@google-cloud/translate": "8.0.2",
+    "contentful-management": "10.44.1",
+    "axios": "1.4.0",
+    "dotenv": "^16.3.1",
+    "form-data": "4.0.0",
+    "csv-writer": "1.6.0",
+    "fs": "0.0.1-security"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x.x",
+    "typescript": "^4.x.x"
+  }
+}
