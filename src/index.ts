@@ -19,14 +19,14 @@ const csvWriter = createObjectCsvWriter({
 
 const client = new SecretManagerServiceClient();
 
-interface IRequestBody {
+interface RequestBody {
   spaceId: string;
   scanAllEntries: boolean;
 }
 
 
 export const app: HttpFunction = async (req, res) => {
-  const { spaceId, scanAllEntries } = req.body as IRequestBody;
+  const { spaceId, scanAllEntries } = req.body as RequestBody;
 
 // Define secret paths.
   const contentfulAccessTokenPath = "projects/47486989130/secrets/CONTENTFUL_ACCESS_TOKEN/versions/latest";
