@@ -1,6 +1,5 @@
 import { HttpFunction } from "@google-cloud/functions-framework";
-import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
-import { fetchMissingTranslations } from "./services/contentfulService";
+import { fetchMissingTranslations } from "./utils/contentful";
 import { createObjectCsvWriter } from "csv-writer";
 import { sendEmail } from "./utils/email";
 
@@ -17,8 +16,6 @@ const csvWriter = createObjectCsvWriter({
   path: csvFilePath
 });
 
-const client = new SecretManagerServiceClient();
-
 interface RequestBody {
   spaceId: string;
   scanAllEntries: boolean;
@@ -27,21 +24,16 @@ interface RequestBody {
 
 export const app: HttpFunction = async (req, res) => {
   const { spaceId, scanAllEntries } = req.body as RequestBody;
-
-// Define secret paths.
-  const contentfulAccessTokenPath = "projects/47486989130/secrets/CONTENTFUL_ACCESS_TOKEN/versions/latest";
-
-  const [contentfulSecret] = await client.accessSecretVersion({name: contentfulAccessTokenPath});
-
-// Extract the payloads from the secrets.
-  const contentfulAccessToken = contentfulSecret?.payload?.data?.toString();
-
-  if (scanAllEntries) {
-    const missingTranslations = await fetchMissingTranslations({spaceId, contentfulAccessToken});
-    await csvWriter.writeRecords(missingTranslations);
-    await sendEmail(csvFilePath);
-    return res.status(200).send("Missing translations sent!");
+  try {
+    if (scanAllEntries) {
+      const missingTranslations = await fetchMissingTranslations(spaceId);
+      await csvWriter.writeRecords(missingTranslations);
+      await sendEmail(csvFilePath);
+      return res.status(200).send("Missing translations sent!");
+    }
   }
-
+  catch (err) {
+    res.status(500).send(err);
+  }
   res.status(400).send("Invalid Request!");
 };
