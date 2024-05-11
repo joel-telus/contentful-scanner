@@ -11,6 +11,6 @@ export interface TranslationsData {
     contentTypeId: string;
     entryId: string;
     field: string;
-    content_EN_US: string;
-    content_FR_CA: string | undefined;
+    enContent: string;
+    frContent: string | undefined;
 }

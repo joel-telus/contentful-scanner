@@ -1,7 +1,7 @@
 import { createClient, ClientAPI }  from "contentful-management";
 
 import { isContentTranslated } from "./translation";
-import {ContentfulEnvironment, ContentfulLocale, TranslationsData} from "../types";
+import {ContentfulEnvironment, ContentfulLocale, TranslationsData} from "../types/global";
 import {SecretManagerServiceClient} from "@google-cloud/secret-manager";
 
 interface FetchAllEntriesProperties {
@@ -10,8 +10,8 @@ interface FetchAllEntriesProperties {
     spaceId: string;
 }
 interface ExtractContentFromArraysProperties {
-    content_EN: (string | unknown[])[];
-    content_FR_CA: (string | unknown[])[];
+    enContent: (string | unknown[])[];
+    frContent: (string | unknown[])[];
     contentTypeId: string;
     entryId: string;
     fieldName: string;
@@ -21,34 +21,32 @@ const createContentfulClient = async () => {
     const client = new SecretManagerServiceClient();
     const contentfulAccessTokenPath = "projects/47486989130/secrets/CONTENTFUL_ACCESS_TOKEN/versions/latest";
     const [contentfulSecret] = await client.accessSecretVersion({name: contentfulAccessTokenPath});
-    const contentfulAccessToken = contentfulSecret?.payload?.data?.toString();
-    if (!contentfulAccessToken) {
+    const accessToken = contentfulSecret?.payload?.data?.toString();
+    if (!accessToken) {
         throw new Error("Error retrieving contentful access token")
     }
-    return createClient({
-        accessToken: contentfulAccessToken,
-    });
+    return createClient({ accessToken });
 }
 /**
  * Extracts content from arrays and handles nested arrays recursively.
  * @param {ExtractContentFromArraysProperties} params - The function parameters.
  */
-const extractContentFromArrays = ({ content_EN, content_FR_CA, contentTypeId, entryId, fieldName, allEntries }: ExtractContentFromArraysProperties) => {
-    if (Array.isArray(content_EN)) {
-        for (let i = 0; i < content_EN.length; i++) {
-            if (Array.isArray(content_EN[i])) {
-                extractContentFromArrays({ content_EN: content_EN[i] as (string | unknown[])[], content_FR_CA: content_FR_CA?.[i] as (string | unknown[])[], contentTypeId, entryId, fieldName, allEntries });
-            } else if (typeof content_EN[i] === "string") {
+const extractContentFromArrays = ({ enContent, frContent, contentTypeId, entryId, fieldName, allEntries }: ExtractContentFromArraysProperties) => {
+    if (Array.isArray(enContent)) {
+        for (let i = 0; i < enContent.length; i++) {
+            if (Array.isArray(enContent[i])) {
+                extractContentFromArrays({ enContent: enContent[i] as (string | unknown[])[], frContent: frContent?.[i] as (string | unknown[])[], contentTypeId, entryId, fieldName, allEntries });
+            } else if (typeof enContent[i] === "string") {
                 const data: TranslationsData = {
                     contentTypeId,
                     entryId,
                     field: fieldName,
-                    content_EN_US: content_EN[i] as string,
-                    content_FR_CA: (content_FR_CA?.[i] as string) || undefined
+                    enContent: enContent[i] as string,
+                    frContent: (frContent?.[i] as string) || undefined
                 };
                 allEntries.push(data);
             }else {
-                console.log("Contentful linktype", content_EN[i]);
+                console.log("Contentful linktype", enContent[i]);
             }
         }
     } else {
@@ -56,8 +54,8 @@ const extractContentFromArrays = ({ content_EN, content_FR_CA, contentTypeId, en
             contentTypeId,
             entryId,
             field: fieldName,
-            content_EN_US: content_EN as string,
-            content_FR_CA: content_FR_CA as unknown as string || undefined
+            enContent: enContent as string,
+            frContent: frContent as unknown as string || undefined
         };
         allEntries.push(data);
     }
@@ -81,23 +79,23 @@ const fetchAllEntries = async ({ contentfulClient, contentTypeId, spaceId }: Fet
             if (!fieldDefinition?.localized) {
                 continue;  // If the field is not localized, skip the checks.
             }
-            const localizedContent_EN = entry.fields[fieldName][ContentfulLocale.EN];
-            const localizedContent_FR_CA = entry.fields[fieldName][ContentfulLocale.FR_CA];
+            const enContent = entry.fields[fieldName][ContentfulLocale.EN];
+            const frContent = entry.fields[fieldName][ContentfulLocale.FR_CA];
 
-            if (typeof localizedContent_EN === "string") {
+            if (typeof enContent === "string") {
                 const data = {
                     contentTypeId,
                     entryId: entry.sys.id,
                     field: fieldName,
-                    content_EN_US: localizedContent_EN,
-                    content_FR_CA: localizedContent_FR_CA || ""
+                    enContent,
+                    frContent: frContent || ""
                 }
                 allEntries.push(data);
             }
-            if (Array.isArray(localizedContent_EN)) {
+            if (Array.isArray(enContent)) {
                 extractContentFromArrays({
-                    content_EN: localizedContent_EN,
-                    content_FR_CA: localizedContent_FR_CA,
+                    enContent,
+                    frContent,
                     contentTypeId,
                     entryId: entry.sys.id,
                     fieldName,
@@ -126,7 +124,7 @@ export const fetchMissingTranslations = async (spaceId: string): Promise<Transla
         for (const contentType of contentTypes.items) {
             const entries = await fetchAllEntries({ contentfulClient, contentTypeId: contentType.sys.id, spaceId });
             for (const entry of entries) {
-                const isTranslated = await isContentTranslated(entry.content_FR_CA,  ContentfulLocale.FR_CA);
+                const isTranslated = await isContentTranslated(entry.frContent,  ContentfulLocale.FR_CA);
                 if (!isTranslated) {
                     missingTranslations.push(entry);
                 }
@@ -138,4 +136,3 @@ export const fetchMissingTranslations = async (spaceId: string): Promise<Transla
         throw new Error(String(error))
     }
 }
-

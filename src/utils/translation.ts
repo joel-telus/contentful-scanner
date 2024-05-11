@@ -1,4 +1,8 @@
 import { TranslationServiceClient } from "@google-cloud/translate";
+
+const projectId = process.env.GCP_PROJECT_ID;
+const location = process.env.GCP_LOCATION;
+const parent = `projects/${projectId}/locations/${location}`;
 /**
  * Checks if the provided content is translated in the specified locale.
  * @param {string} content - The content to check for translation.
@@ -10,9 +14,6 @@ import { TranslationServiceClient } from "@google-cloud/translate";
  * console.log(result.isLocalized);  // Expected output: true
  */
 export const isContentTranslated = async (content: string | undefined, locale: string): Promise< boolean> => {
-    const projectId = process.env.GCP_PROJECT_ID;
-    const location = process.env.GCP_LOCATION;
-    const parent = `projects/${projectId}/locations/${location}`;
     const translateClient = new TranslationServiceClient();
     if (content) {
         const response = await translateClient.detectLanguage({
@@ -28,4 +29,18 @@ export const isContentTranslated = async (content: string | undefined, locale: s
         }
     }
     return false
+}
+
+export const translateText = async (content: string, sourceLanguageCode: string, targetLanguageCode: string) => {
+    //The max length of allowed text is 1024.
+    if (content.length > 1024) {
+        return "Text exceeds the maximum allowed length of 1024 characters"
+    }
+    const translateClient = new TranslationServiceClient();
+    const response = await translateClient.translateText({
+        contents: [content],
+        sourceLanguageCode,
+        targetLanguageCode,
+    })
+    return response[0]?.translations?.[0].translatedText
 }

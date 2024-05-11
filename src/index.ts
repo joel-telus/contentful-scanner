@@ -2,26 +2,25 @@ import { HttpFunction } from "@google-cloud/functions-framework";
 import { fetchMissingTranslations } from "./utils/contentful";
 import { createObjectCsvWriter } from "csv-writer";
 import { sendEmail } from "./utils/email";
+interface RequestBody {
+  spaceId: string;
+  scanAllEntries: boolean;
+}
 
 const csvHeader = [
   {id: "contentTypeId", title: "CONTENT_TYPE_ID"},
   {id: "entryId", title: "ENTRY_ID"},
   {id: "field", title: "FIELD"},
   {id: "content_EN_US", title: "CONTENT_EN_US"},
-  {id: "content_FR_CA", title: "CONTENT_FR_CA"}
+  {id: "content_FR_CA", title: "CONTENT_FR_CA"},
+  {id: "Suggested_FR_CA", title: "Suggested FR_CA"},
+  {id: "Contentful_link", title: "Contentful link"}
 ]
 const csvFilePath = "missing_translations.csv";
 const csvWriter = createObjectCsvWriter({
   header: csvHeader,
   path: csvFilePath
 });
-
-interface RequestBody {
-  spaceId: string;
-  scanAllEntries: boolean;
-}
-
-
 export const app: HttpFunction = async (req, res) => {
   const { spaceId, scanAllEntries } = req.body as RequestBody;
   try {
