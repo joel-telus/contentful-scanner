@@ -37,7 +37,6 @@ const extractContentFromArrays = ({ content_EN, content_FR_CA, contentTypeId, en
     if (Array.isArray(content_EN)) {
         for (let i = 0; i < content_EN.length; i++) {
             if (Array.isArray(content_EN[i])) {
-                // If the content is a nested array, recursively handle it
                 extractContentFromArrays({ content_EN: content_EN[i] as (string | unknown[])[], content_FR_CA: content_FR_CA?.[i] as (string | unknown[])[], contentTypeId, entryId, fieldName, allEntries });
             } else if (typeof content_EN[i] === "string") {
                 const data: TranslationsData = {
@@ -67,7 +66,7 @@ const extractContentFromArrays = ({ content_EN, content_FR_CA, contentTypeId, en
 /**
  * Fetches all entries for a given content type from Contentful.
  * @async
- * @param {HandleFetchAllEntriesProperties} params - The function parameters.
+ * @param {FetchAllEntriesProperties} params - The function parameters.
  * @returns {Promise<TranslationsData[]>} - Array of all entries.
  */
 const fetchAllEntries = async ({ contentfulClient, contentTypeId, spaceId }: FetchAllEntriesProperties): Promise<TranslationsData[]> => {

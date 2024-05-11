@@ -18,7 +18,6 @@ const getOAuthToken = async (): Promise<string>=> {
     const gcpClientIdPath = "projects/47486989130/secrets/EMAIL_TOKEN_CLIENT_ID/versions/latest";
     const gcpClientSecretPath = "projects/47486989130/secrets/EMAIL_TOKEN_CLIENT_SECRET/versions/latest";
 
-// Fetch the secrets.
     const [emailClientIdSecret] = await client.accessSecretVersion({name: gcpClientIdPath});
     const [emailClientSecretSecret] = await client.accessSecretVersion({name: gcpClientSecretPath});
 
@@ -85,11 +84,5 @@ export const sendEmail = async (filepath: string): Promise<void> => {
         },
         data: data
     };
-
-    try {
-        await axios.request(config);
-    } catch (error) {
-        console.error("Error sending email:", error);
-        throw error;
-    }
+    await axios.request(config);
 }

@@ -1,14 +1,12 @@
 import { TranslationServiceClient } from "@google-cloud/translate";
 /**
- * Checks if the provided content is localized in the specified locale.
+ * Checks if the provided content is translated in the specified locale.
  * @param {string} content - The content to check for translation.
  * @param {string} locale - The target locale to check against.
- *
- * @returns {Promise<IsLocalizedContentProperties>} An object indicating whether the content is localized or not.
- * @throws {Error} Throws an error if any problem occurs while detecting the language.
+ * @returns {Promise<boolean>} A boolean indicating whether the content is translated or not.
  *
  * @example
- * const result = await isLocalizedContent({ translatedContent: "Bonjour", locale: "fr" });
+ * const result = await isContentTranslated({ content: "Bonjour", locale: "fr" });
  * console.log(result.isLocalized);  // Expected output: true
  */
 export const isContentTranslated = async (content: string | undefined, locale: string): Promise< boolean> => {
