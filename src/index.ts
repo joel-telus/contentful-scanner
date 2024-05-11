@@ -2,7 +2,7 @@ import { HttpFunction } from "@google-cloud/functions-framework";
 import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
 import { fetchMissingTranslations } from "./services/contentfulService";
 import { createObjectCsvWriter } from "csv-writer";
-import { sendEmail } from "./services/emailService";
+import { sendEmail } from "./utils/email";
 
 const csvHeader = [
   {id: "contentTypeId", title: "CONTENT_TYPE_ID"},
@@ -30,24 +30,16 @@ export const app: HttpFunction = async (req, res) => {
 
 // Define secret paths.
   const contentfulAccessTokenPath = "projects/47486989130/secrets/CONTENTFUL_ACCESS_TOKEN/versions/latest";
-  const emailTokenClientIdPath = "projects/47486989130/secrets/EMAIL_TOKEN_CLIENT_ID/versions/latest";
-  const emailTokenClientSecretPath = "projects/47486989130/secrets/EMAIL_TOKEN_CLIENT_SECRET/versions/latest";
 
-// Fetch the secrets.
   const [contentfulSecret] = await client.accessSecretVersion({name: contentfulAccessTokenPath});
-  const [emailClientIdSecret] = await client.accessSecretVersion({name: emailTokenClientIdPath});
-  const [emailClientSecretSecret] = await client.accessSecretVersion({name: emailTokenClientSecretPath});
 
 // Extract the payloads from the secrets.
   const contentfulAccessToken = contentfulSecret?.payload?.data?.toString();
-  const emailTokenClientId = emailClientIdSecret?.payload?.data?.toString();
-  const emailTokenClientSecret = emailClientSecretSecret?.payload?.data?.toString();
-
 
   if (scanAllEntries) {
     const missingTranslations = await fetchMissingTranslations({spaceId, contentfulAccessToken});
     await csvWriter.writeRecords(missingTranslations);
-    await sendEmail({ filepath: csvFilePath, CLIENT_ID: emailTokenClientId, CLIENT_SECRET: emailTokenClientSecret});
+    await sendEmail(csvFilePath);
     return res.status(200).send("Missing translations sent!");
   }
 
