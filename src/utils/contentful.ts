@@ -19,6 +19,7 @@ interface ExtractContentFromArraysProperties {
 interface FetchAllEntriesReturn extends TranslationsData {}
 interface FetchMissingTranslationsReturn extends TranslationsData {
     suggestedFrContent: string;
+    linkToContent: string;
 }
 const excludedContentTypes = new Set(["assetWrapper", "udsIcons"])
 const createContentfulClient = async () => {
@@ -134,7 +135,7 @@ export const fetchMissingTranslations = async (spaceId: string): Promise<FetchMi
                     const isTranslated = await isContentTranslated(entry.frContent,  ContentfulLocale.FR_CA);
                     if (!isTranslated) {
                         const translatedContent = await translateText(entry.frContent, ContentfulLocale.FR_CA)
-                        missingTranslations.push({...entry, suggestedFrContent: translatedContent});
+                        missingTranslations.push({...entry, suggestedFrContent: translatedContent, linkToContent: `https://app.contentful.com/spaces/${spaceId}/environments/${process.env.CONTENTFUL_ENVIRONMENT}/entries/${entry.entryId}`});
                     }
                 }
             }

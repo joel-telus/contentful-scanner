@@ -13,7 +13,8 @@ export const csvHeader = [
   {id: "field", title: "FIELD"},
   {id: "enContent", title: "CONTENT_EN_US"},
   {id: "frContent", title: "CONTENT_FR_CA"},
-  {id: "suggestedFrContent", title: "SUGGESTED_FR_CONTENT"}
+  {id: "suggestedFrContent", title: "SUGGESTED_FR_CONTENT"},
+  {id: "linkToContent", title: "LINK_TO_CONTENT"},
 ]
 const csvFilePath = "missing_translations.csv";
 const csvWriter = createObjectCsvWriter({
