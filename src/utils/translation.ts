@@ -34,7 +34,8 @@ export const isContentTranslated = async (content: string | undefined, locale: s
     }
 };
 
-export const translateText = async (content: string, targetLanguage: string): Promise<string> => {
+export const translateText = async (content: string | undefined, targetLanguage: string): Promise<string> => {
+    if (!content) return ""
     // The max length of allowed text is 1024.
     if (content.length > 1024) {
         return "Text exceeds the maximum allowed length of 1024 characters";
