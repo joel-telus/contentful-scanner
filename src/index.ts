@@ -11,10 +11,8 @@ const csvHeader = [
   {id: "contentTypeId", title: "CONTENT_TYPE_ID"},
   {id: "entryId", title: "ENTRY_ID"},
   {id: "field", title: "FIELD"},
-  {id: "content_EN_US", title: "CONTENT_EN_US"},
-  {id: "content_FR_CA", title: "CONTENT_FR_CA"},
-  {id: "Suggested_FR_CA", title: "Suggested FR_CA"},
-  {id: "Contentful_link", title: "Contentful link"}
+  {id: "enContent", title: "CONTENT_EN_US"},
+  {id: "frContent", title: "CONTENT_FR_CA"},
 ]
 const csvFilePath = "missing_translations.csv";
 const csvWriter = createObjectCsvWriter({

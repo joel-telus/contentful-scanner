@@ -1,7 +1,7 @@
 import { createClient, ClientAPI }  from "contentful-management";
 import { isContentTranslated } from "./translation";
 import {ContentfulEnvironment, ContentfulLocale, TranslationsData} from "../types/global";
-import { GCP_SECRET, retrieveSecret } from "./gcp";
+import { GCP_SECRET_TYPE, retrieveSecret } from "./gcp";
 
 interface FetchAllEntriesProperties {
     contentfulClient: ClientAPI;
@@ -22,7 +22,7 @@ const createContentfulClient = async () => {
     if (process.env.ENVIRONMENT === "development") {
         accessToken = process.env.CONTENTFUL_ACCESS_TOKEN
     }else {
-        accessToken = await retrieveSecret(GCP_SECRET.CONTENTFUL_ACCESS_TOKEN)
+        accessToken = await retrieveSecret(GCP_SECRET_TYPE.CONTENTFUL_ACCESS_TOKEN)
     }
     if (!accessToken) {
         throw new Error("Error retrieving contentful access token")

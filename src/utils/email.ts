@@ -3,7 +3,7 @@ import axios from "axios";
 import FormData from "form-data";
 import * as fs from "fs";
 import 'dotenv/config'
-import {GCP_SECRET, retrieveSecret} from "./gcp";
+import {GCP_SECRET_TYPE, retrieveSecret} from "./gcp";
 
 const OAUTH_URL = "https://apigw-pr.telus.com/token";
 const SCOPE = 2432;
@@ -21,8 +21,8 @@ const getOAuthToken = async (): Promise<string>=> {
         clientSecret = process.env.EMAIL_TOKEN_CLIENT_SECRET
     }
     else {
-        clientId = await retrieveSecret(GCP_SECRET.EMAIL_TOKEN_CLIENT_ID)
-        clientSecret = await retrieveSecret(GCP_SECRET.EMAIL_TOKEN_CLIENT_SECRET)
+        clientId = await retrieveSecret(GCP_SECRET_TYPE.EMAIL_TOKEN_CLIENT_ID)
+        clientSecret = await retrieveSecret(GCP_SECRET_TYPE.EMAIL_TOKEN_CLIENT_SECRET)
     }
 
     const authData = {
