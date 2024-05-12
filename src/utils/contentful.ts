@@ -1,8 +1,7 @@
 import { createClient, ClientAPI }  from "contentful-management";
-
 import { isContentTranslated } from "./translation";
 import {ContentfulEnvironment, ContentfulLocale, TranslationsData} from "../types/global";
-import {SecretManagerServiceClient} from "@google-cloud/secret-manager";
+import { GCP_SECRET, retrieveSecret } from "./gcp";
 
 interface FetchAllEntriesProperties {
     contentfulClient: ClientAPI;
@@ -17,11 +16,14 @@ interface ExtractContentFromArraysProperties {
     fieldName: string;
     allEntries: TranslationsData[];
 }
+const excludedContentTypes = new Set(["assetWrapper", "udsIcons"])
 const createContentfulClient = async () => {
-    const client = new SecretManagerServiceClient();
-    const contentfulAccessTokenPath = "projects/47486989130/secrets/CONTENTFUL_ACCESS_TOKEN/versions/latest";
-    const [contentfulSecret] = await client.accessSecretVersion({name: contentfulAccessTokenPath});
-    const accessToken = contentfulSecret?.payload?.data?.toString();
+    let accessToken;
+    if (process.env.ENVIRONMENT === "development") {
+        accessToken = process.env.CONTENTFUL_ACCESS_TOKEN
+    }else {
+        accessToken = await retrieveSecret(GCP_SECRET.CONTENTFUL_ACCESS_TOKEN)
+    }
     if (!accessToken) {
         throw new Error("Error retrieving contentful access token")
     }
@@ -122,11 +124,13 @@ export const fetchMissingTranslations = async (spaceId: string): Promise<Transla
         const environment = await space.getEnvironment(process.env.CONTENTFUL_ENVIRONMENT as ContentfulEnvironment);
         const contentTypes = await environment.getContentTypes();
         for (const contentType of contentTypes.items) {
-            const entries = await fetchAllEntries({ contentfulClient, contentTypeId: contentType.sys.id, spaceId });
-            for (const entry of entries) {
-                const isTranslated = await isContentTranslated(entry.frContent,  ContentfulLocale.FR_CA);
-                if (!isTranslated) {
-                    missingTranslations.push(entry);
+            if (!excludedContentTypes.has(contentType.sys.id)) {
+                const entries = await fetchAllEntries({ contentfulClient, contentTypeId: contentType.sys.id, spaceId });
+                for (const entry of entries) {
+                    const isTranslated = await isContentTranslated(entry.frContent,  ContentfulLocale.FR_CA);
+                    if (!isTranslated) {
+                        missingTranslations.push(entry);
+                    }
                 }
             }
         }
