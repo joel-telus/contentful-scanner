@@ -1,12 +1,11 @@
-import { createClient, ClientAPI }  from "contentful-management";
+import {createClient, Environment} from "contentful-management";
 import { isContentTranslated, translateText } from "./translation";
 import { ContentfulEnvironment, ContentfulLocale, TranslationsData } from "../types/global";
 import { GCP_SECRET_TYPE, retrieveSecret } from "./gcp";
 
 interface FetchAllEntriesProperties {
-    contentfulClient: ClientAPI;
     contentTypeId: string;
-    spaceId: string;
+    environment: Environment
 }
 interface ExtractContentFromArraysProperties {
     enContent: (string | unknown[])[];
@@ -74,10 +73,8 @@ const extractContentFromArrays = ({ enContent, frContent, contentTypeId, entryId
  * @param {FetchAllEntriesProperties} params - The function parameters.
  * @returns {Promise<TranslationsData[]>} - Array of all entries.
  */
-const fetchAllEntries = async ({ contentfulClient, contentTypeId, spaceId }: FetchAllEntriesProperties): Promise<FetchAllEntriesReturn[]> => {
+const fetchAllEntries = async ({ contentTypeId, environment }: FetchAllEntriesProperties): Promise<FetchAllEntriesReturn[]> => {
     const allEntries: FetchAllEntriesReturn[] = [];
-    const space = await contentfulClient.getSpace(spaceId);
-    const environment = await space.getEnvironment(process.env.CONTENTFUL_ENVIRONMENT as ContentfulEnvironment);
     const contentType = await environment.getContentType(contentTypeId);
     const entries = await environment.getEntries({ content_type: contentTypeId, include: 10, limit: 1000 });
     entries.items.forEach((entry) => {
@@ -130,7 +127,7 @@ export const fetchMissingTranslations = async (spaceId: string): Promise<FetchMi
         const contentTypes = await environment.getContentTypes();
         for (const contentType of contentTypes.items) {
             if (!excludedContentTypes.has(contentType.sys.id)) {
-                const entries = await fetchAllEntries({ contentfulClient, contentTypeId: contentType.sys.id, spaceId });
+                const entries = await fetchAllEntries({ environment, contentTypeId: contentType.sys.id });
                 for (const entry of entries) {
                     const isTranslated = await isContentTranslated(entry.frContent,  ContentfulLocale.FR_CA);
                     if (!isTranslated) {
