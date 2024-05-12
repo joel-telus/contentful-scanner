@@ -7,12 +7,13 @@ interface RequestBody {
   scanAllEntries: boolean;
 }
 
-const csvHeader = [
+export const csvHeader = [
   {id: "contentTypeId", title: "CONTENT_TYPE_ID"},
   {id: "entryId", title: "ENTRY_ID"},
   {id: "field", title: "FIELD"},
   {id: "enContent", title: "CONTENT_EN_US"},
   {id: "frContent", title: "CONTENT_FR_CA"},
+  {id: "suggestedFrContent", title: "SUGGESTED_FR_CONTENT"}
 ]
 const csvFilePath = "missing_translations.csv";
 const csvWriter = createObjectCsvWriter({
