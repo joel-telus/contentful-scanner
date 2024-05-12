@@ -9,17 +9,18 @@
   "scripts": {
     "tsconfig": "tsc --init",
     "gcp-build": "tsc",
-    "start": "functions-framework --target app --port 8081"
+    "start": "functions-framework --target app --port 8081",
+    "dev": "tsc && node lib/localDev.js"
   },
   "dependencies": {
     "@google-cloud/functions-framework": "3.3.0",
     "@google-cloud/secret-manager": "^5.0.1",
-    "@google-cloud/translate": "8.0.2",
+    "@google-cloud/translate": "8.2.0",
+    "axios": "1.6.8",
     "contentful-management": "10.44.1",
-    "axios": "1.4.0",
-    "dotenv": "^16.3.1",
-    "form-data": "4.0.0",
     "csv-writer": "1.6.0",
+    "dotenv": "^16.4.5",
+    "form-data": "4.0.0",
     "fs": "0.0.1-security"
   },
   "devDependencies": {
