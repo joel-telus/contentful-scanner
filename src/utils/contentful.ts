@@ -1,6 +1,6 @@
 import { createClient, ClientAPI }  from "contentful-management";
-import { isContentTranslated } from "./translation";
-import {ContentfulEnvironment, ContentfulLocale, TranslationsData} from "../types/global";
+import { isContentTranslated, translateText } from "./translation";
+import { ContentfulEnvironment, ContentfulLocale, TranslationsData } from "../types/global";
 import { GCP_SECRET_TYPE, retrieveSecret } from "./gcp";
 
 interface FetchAllEntriesProperties {
@@ -15,6 +15,10 @@ interface ExtractContentFromArraysProperties {
     entryId: string;
     fieldName: string;
     allEntries: TranslationsData[];
+}
+interface FetchAllEntriesReturn extends TranslationsData {}
+interface FetchMissingTranslationsReturn extends TranslationsData {
+    suggestedFrContent: string;
 }
 const excludedContentTypes = new Set(["assetWrapper", "udsIcons"])
 const createContentfulClient = async () => {
@@ -69,8 +73,8 @@ const extractContentFromArrays = ({ enContent, frContent, contentTypeId, entryId
  * @param {FetchAllEntriesProperties} params - The function parameters.
  * @returns {Promise<TranslationsData[]>} - Array of all entries.
  */
-const fetchAllEntries = async ({ contentfulClient, contentTypeId, spaceId }: FetchAllEntriesProperties): Promise<TranslationsData[]> => {
-    const allEntries: TranslationsData[] = [];
+const fetchAllEntries = async ({ contentfulClient, contentTypeId, spaceId }: FetchAllEntriesProperties): Promise<FetchAllEntriesReturn[]> => {
+    const allEntries: FetchAllEntriesReturn[] = [];
     const space = await contentfulClient.getSpace(spaceId);
     const environment = await space.getEnvironment(process.env.CONTENTFUL_ENVIRONMENT as ContentfulEnvironment);
     const contentType = await environment.getContentType(contentTypeId);
@@ -116,10 +120,10 @@ const fetchAllEntries = async ({ contentfulClient, contentTypeId, spaceId }: Fet
  * @returns {Promise<TranslationsData[]>} - Array of entries with missing translations.
  */
 
-export const fetchMissingTranslations = async (spaceId: string): Promise<TranslationsData[]> => {
+export const fetchMissingTranslations = async (spaceId: string): Promise<FetchMissingTranslationsReturn[]> => {
     try {
         const contentfulClient = await createContentfulClient()
-        const missingTranslations: TranslationsData[] = [];
+        const missingTranslations: FetchMissingTranslationsReturn[] = [];
         const space = await contentfulClient.getSpace(spaceId);
         const environment = await space.getEnvironment(process.env.CONTENTFUL_ENVIRONMENT as ContentfulEnvironment);
         const contentTypes = await environment.getContentTypes();
@@ -129,7 +133,8 @@ export const fetchMissingTranslations = async (spaceId: string): Promise<Transla
                 for (const entry of entries) {
                     const isTranslated = await isContentTranslated(entry.frContent,  ContentfulLocale.FR_CA);
                     if (!isTranslated) {
-                        missingTranslations.push(entry);
+                        const translatedContent = await translateText(entry.frContent, ContentfulLocale.FR_CA)
+                        missingTranslations.push({...entry, suggestedFrContent: translatedContent});
                     }
                 }
             }
