@@ -1,28 +1,29 @@
-import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
 import querystring from "querystring";
 import axios from "axios";
 import FormData from "form-data";
 import * as fs from "fs";
+import 'dotenv/config'
+import {GCP_SECRET, retrieveSecret} from "./gcp";
 
 const OAUTH_URL = "https://apigw-pr.telus.com/token";
 const SCOPE = 2432;
 const GRANT_TYPE = "client_credentials";
 /**
  * Obtain an OAuth token.
- * @async
  * @returns {Promise<string>} - The OAuth token.
  * @throws {Error} Throws an error if there's an issue obtaining the token.
  */
 const getOAuthToken = async (): Promise<string>=> {
-    const client = new SecretManagerServiceClient();
-    const gcpClientIdPath = "projects/47486989130/secrets/EMAIL_TOKEN_CLIENT_ID/versions/latest";
-    const gcpClientSecretPath = "projects/47486989130/secrets/EMAIL_TOKEN_CLIENT_SECRET/versions/latest";
-
-    const [emailClientIdSecret] = await client.accessSecretVersion({name: gcpClientIdPath});
-    const [emailClientSecretSecret] = await client.accessSecretVersion({name: gcpClientSecretPath});
-
-    const clientId = emailClientIdSecret?.payload?.data?.toString();
-    const clientSecret = emailClientSecretSecret?.payload?.data?.toString();
+    let clientId;
+    let clientSecret;
+    if (process.env.ENVIRONMENT === "development") {
+        clientId = process.env.EMAIL_TOKEN_CLIENT_ID
+        clientSecret = process.env.EMAIL_TOKEN_CLIENT_SECRET
+    }
+    else {
+        clientId = await retrieveSecret(GCP_SECRET.EMAIL_TOKEN_CLIENT_ID)
+        clientSecret = await retrieveSecret(GCP_SECRET.EMAIL_TOKEN_CLIENT_SECRET)
+    }
 
     const authData = {
         grant_type: GRANT_TYPE,
@@ -46,7 +47,6 @@ const getOAuthToken = async (): Promise<string>=> {
 
 /**
  * Send an email with an attachment.
- * @async
  * @param filepath - location of the attachment
  * @returns {Promise<void>}
  */
