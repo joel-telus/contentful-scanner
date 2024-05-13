@@ -75,41 +75,55 @@ const extractContentFromArrays = ({ enContent, frContent, contentTypeId, entryId
  */
 const fetchAllEntries = async ({ contentTypeId, environment }: FetchAllEntriesProperties): Promise<FetchAllEntriesReturn[]> => {
     const allEntries: FetchAllEntriesReturn[] = [];
-    const contentType = await environment.getContentType(contentTypeId);
-    const entries = await environment.getEntries({ content_type: contentTypeId, include: 10, limit: 1000 });
-    entries.items.forEach((entry) => {
-        for (const fieldName in entry.fields) {
-            const fieldDefinition = contentType.fields.find(f => f.id === fieldName);
-            if (!fieldDefinition?.localized) {
-                continue;  // If the field is not localized, skip the checks.
-            }
-            const enContent = entry.fields[fieldName][ContentfulLocale.EN];
-            const frContent = entry.fields[fieldName][ContentfulLocale.FR_CA];
+    try {
+        const contentType = await environment.getContentType(contentTypeId);
+        let skip = 0;
+        let total = 0;
+        do {
+            const entries = await environment.getEntries({
+                content_type: contentTypeId,
+                include: 10,
+                limit: 1000,
+                skip
+            });
+            total = entries.total;
+            entries.items.forEach((entry) => {
+                for (const fieldName in entry.fields) {
+                    const fieldDefinition = contentType.fields.find(f => f.id === fieldName);
+                    if (!fieldDefinition?.localized) continue;
 
-            if (typeof enContent === "string") {
-                const data = {
-                    contentTypeId,
-                    entryId: entry.sys.id,
-                    field: fieldName,
-                    enContent,
-                    frContent: frContent || ""
+                    const enContent = entry.fields[fieldName][ContentfulLocale.EN];
+                    const frContent = entry.fields[fieldName][ContentfulLocale.FR_CA] || "";
+
+                    if (typeof enContent === "string") {
+                        allEntries.push({
+                            contentTypeId,
+                            entryId: entry.sys.id,
+                            field: fieldName,
+                            enContent,
+                            frContent
+                        });
+                    }
+
+                    if (Array.isArray(enContent)) {
+                        extractContentFromArrays({
+                            enContent,
+                            frContent,
+                            contentTypeId,
+                            entryId: entry.sys.id,
+                            fieldName,
+                            allEntries
+                        });
+                    }
                 }
-                allEntries.push(data);
-            }
-            if (Array.isArray(enContent)) {
-                extractContentFromArrays({
-                    enContent,
-                    frContent,
-                    contentTypeId,
-                    entryId: entry.sys.id,
-                    fieldName,
-                    allEntries
-                });
-            }
-        }
-    });
+            });
+            skip += entries.limit;
+        } while (skip < total);
+    } catch (error) {
+        console.error('Failed to fetch all entries:', error);
+    }
     return allEntries;
-}
+};
 
 /**
  * Fetches missing translations from Contentful.
