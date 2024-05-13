@@ -66,7 +66,7 @@ export const sendEmail = async (filepath: string): Promise<void> => {
     `;
 
     let data = new FormData();
-    data.append('from', "testing@telus.com");
+    data.append('from', "tbm.contentful@telus.com");
     data.append('to', emailList);
     data.append('cc', "");
     data.append('subject', subject);
