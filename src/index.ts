@@ -27,7 +27,7 @@ export const app: HttpFunction = async (req, res) => {
     if (scanAllEntries) {
       const missingTranslations = await fetchMissingTranslations(spaceId);
       await csvWriter.writeRecords(missingTranslations);
-      await sendEmail(csvFilePath);
+      await sendEmail(csvFilePath, missingTranslations.length);
       return res.status(200).send("Missing translations sent!");
     }
   }

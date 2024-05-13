@@ -48,19 +48,20 @@ const getOAuthToken = async (): Promise<string>=> {
 /**
  * Send an email with an attachment.
  * @param filepath - location of the attachment
+ * @param missingTranslationCount - the number of missing translations
  * @returns {Promise<void>}
  */
-export const sendEmail = async (filepath: string): Promise<void> => {
+export const sendEmail = async (filepath: string, missingTranslationCount: number): Promise<void> => {
     const emailList = process.env.EMAIL_LIST;
     const token = await getOAuthToken();
-    const subject = "Missing translations detected for Telus Shopfront";
+    const subject = `${missingTranslationCount} Missing translations detected for TBM in Contentful`;
     const bodyText = `
         <!DOCTYPE html>
         <html>
         <body>
         <p>Hi,</p>
-        <p>Please find attached, the missing translations for Telus Business Marketplace.</p>
-        <p>thanks.</p>
+        <p>Please find attached, the missing translations for Telus Business Marketplace in Contentful. We have detected <strong>${missingTranslationCount}</strong> missing translations.</p>
+        <p>Thanks.</p>
         </body>
         </html>
     `;
