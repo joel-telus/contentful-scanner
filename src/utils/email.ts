@@ -2,36 +2,33 @@ import querystring from "querystring";
 import axios from "axios";
 import FormData from "form-data";
 import * as fs from "fs";
-
-interface IGetOAuthTokenProperties {
-    CLIENT_ID: string;
-    CLIENT_SECRET: string;
-}
-
-interface ISendEmailProperties {
-    CLIENT_SECRET: string | undefined;
-    CLIENT_ID: string | undefined;
-    filepath: string;
-}
+import 'dotenv/config'
+import {GCP_SECRET_TYPE, retrieveSecret} from "./gcp";
 
 const OAUTH_URL = "https://apigw-pr.telus.com/token";
 const SCOPE = 2432;
 const GRANT_TYPE = "client_credentials";
-
 /**
  * Obtain an OAuth token.
- * @async
- * @param {IGetOAuthTokenProperties} params - The function parameters.
  * @returns {Promise<string>} - The OAuth token.
  * @throws {Error} Throws an error if there's an issue obtaining the token.
  */
+const getOAuthToken = async (): Promise<string>=> {
+    let clientId;
+    let clientSecret;
+    if (process.env.ENVIRONMENT === "development") {
+        clientId = process.env.EMAIL_TOKEN_CLIENT_ID
+        clientSecret = process.env.EMAIL_TOKEN_CLIENT_SECRET
+    }
+    else {
+        clientId = await retrieveSecret(GCP_SECRET_TYPE.EMAIL_TOKEN_CLIENT_ID)
+        clientSecret = await retrieveSecret(GCP_SECRET_TYPE.EMAIL_TOKEN_CLIENT_SECRET)
+    }
 
-
-const getOAuthToken = async ({ CLIENT_ID, CLIENT_SECRET }: IGetOAuthTokenProperties): Promise<string>=> {
     const authData = {
         grant_type: GRANT_TYPE,
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET,
+        client_id: clientId,
+        client_secret: clientSecret,
         scope: SCOPE
     };
 
@@ -50,31 +47,27 @@ const getOAuthToken = async ({ CLIENT_ID, CLIENT_SECRET }: IGetOAuthTokenPropert
 
 /**
  * Send an email with an attachment.
- * @async
- * @param {ISendEmailProperties} params - The function parameters.
+ * @param filepath - location of the attachment
+ * @param missingTranslationCount - the number of missing translations
  * @returns {Promise<void>}
- * @throws {Error} Throws an error if client credentials are missing or there's an issue sending the email.
  */
-export const sendEmail = async ({ filepath, CLIENT_ID, CLIENT_SECRET }: ISendEmailProperties ): Promise<void> => {
-    if (!CLIENT_SECRET || !CLIENT_ID){
-        throw new Error("Client ID and secret are required");
-    }
+export const sendEmail = async (filepath: string, missingTranslationCount: number): Promise<void> => {
     const emailList = process.env.EMAIL_LIST;
-    const token = await getOAuthToken({ CLIENT_ID, CLIENT_SECRET, });
-    const subject = "Missing translations detected for Telus Shopfront";
+    const token = await getOAuthToken();
+    const subject = `${missingTranslationCount} Missing translations detected for TBM in Contentful`;
     const bodyText = `
         <!DOCTYPE html>
         <html>
         <body>
         <p>Hi,</p>
-        <p>Please find attached, the missing translations for Telus Business Marketplace.</p>
-        <p>thanks.</p>
+        <p>Please find attached, the missing translations for Telus Business Marketplace in Contentful. We have detected <strong>${missingTranslationCount}</strong> missing translations.</p>
+        <p>Thanks.</p>
         </body>
         </html>
     `;
 
     let data = new FormData();
-    data.append('from', "testing@telus.com");
+    data.append('from', "tbm.contentful@telus.com");
     data.append('to', emailList);
     data.append('cc', "");
     data.append('subject', subject);
@@ -92,11 +85,5 @@ export const sendEmail = async ({ filepath, CLIENT_ID, CLIENT_SECRET }: ISendEma
         },
         data: data
     };
-
-    try {
-        await axios.request(config);
-    } catch (error) {
-        console.error("Error sending email:", error);
-        throw error;
-    }
+    await axios.request(config);
 }

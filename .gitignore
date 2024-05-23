@@ -1,2 +1,6 @@
 .env
 .idea
+node_modules
+gcp_sa.json
+./src/localDev.ts
+lib
