@@ -12,13 +12,13 @@ export const retrieveSecret = async (secretId: GCP_SECRET_TYPE): Promise<string 
         let path = "";
         switch (secretId) {
             case GCP_SECRET_TYPE.CONTENTFUL_ACCESS_TOKEN:
-                path = "projects/47486989130/secrets/CONTENTFUL_ACCESS_TOKEN/versions/latest";
+                path = "projects/505756246820/secrets/CONTENTFUL_ACCESS_TOKEN/versions/latest";
                 break;
             case GCP_SECRET_TYPE.EMAIL_TOKEN_CLIENT_ID:
-                path = "projects/47486989130/secrets/EMAIL_TOKEN_CLIENT_ID/versions/latest";
+                path = "projects/505756246820/secrets/EMAIL_TOKEN_CLIENT_ID/versions/latest";
                 break;
             case GCP_SECRET_TYPE.EMAIL_TOKEN_CLIENT_SECRET:
-                path = "projects/47486989130/secrets/EMAIL_TOKEN_CLIENT_SECRET/versions/latest";
+                path = "projects/505756246820/secrets/EMAIL_TOKEN_CLIENT_SECRET/versions/latest";
                 break;
         }
         const [secret] = await client.accessSecretVersion({ name: path });
